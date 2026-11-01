@@ -4,7 +4,7 @@ import { publishToDevto } from "./publish";
 import { db, q, run, lastId } from "./db";
 import html from "../web/index.html" with { type: "text" };
 
-const VERSION = "0.1.9";
+const VERSION = "0.1.10";
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
   console.log("Kloggy " + VERSION);
   process.exit(0);
@@ -15,8 +15,13 @@ if (process.argv.includes("update")) {
     const res = await fetch("https://api.github.com/repos/vicgupta/kloggy/releases/latest");
     if (!res.ok) { console.error("Failed to fetch release:", res.status); process.exit(1); }
     const rel: any = await res.json();
-    const asset = (rel.assets || []).find((a: any) => a.name === "kloggy");
-    if (!asset) { console.error("No binary asset in latest release."); process.exit(1); }
+    // pick asset for current platform
+    let assetName = "kloggy";
+    if (process.platform === "linux") {
+      assetName = process.arch === "arm64" ? "kloggy-linux-arm64" : "kloggy-linux-x64";
+    }
+    const asset = (rel.assets || []).find((a: any) => a.name === assetName);
+    if (!asset) { console.error("No binary asset for this platform in latest release."); process.exit(1); }
     console.log("Downloading", asset.name, "from", rel.tag_name, "...");
     const bin = await fetch(asset.browser_download_url);
     if (!bin.ok) { console.error("Download failed:", bin.status); process.exit(1); }
