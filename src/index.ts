@@ -4,9 +4,30 @@ import { publishToDevto } from "./publish";
 import { db, q, run, lastId } from "./db";
 import html from "../web/index.html" with { type: "text" };
 
-const VERSION = "0.1.8";
+const VERSION = "0.1.9";
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
   console.log("Kloggy " + VERSION);
+  process.exit(0);
+}
+if (process.argv.includes("update")) {
+  try {
+    console.log("Checking for updates...");
+    const res = await fetch("https://api.github.com/repos/vicgupta/kloggy/releases/latest");
+    if (!res.ok) { console.error("Failed to fetch release:", res.status); process.exit(1); }
+    const rel: any = await res.json();
+    const asset = (rel.assets || []).find((a: any) => a.name === "kloggy");
+    if (!asset) { console.error("No binary asset in latest release."); process.exit(1); }
+    console.log("Downloading", asset.name, "from", rel.tag_name, "...");
+    const bin = await fetch(asset.browser_download_url);
+    if (!bin.ok) { console.error("Download failed:", bin.status); process.exit(1); }
+    const buf = await bin.arrayBuffer();
+    const target = process.execPath;
+    await Bun.write(target, buf);
+    try { const fs = await import("node:fs"); fs.chmodSync(target, 0o755); } catch (e) {}
+    console.log("Updated to", rel.tag_name, "at", target);
+  } catch (e: any) {
+    console.error("Update failed:", e?.message || e);
+  }
   process.exit(0);
 }
 const HOST = process.env.HOST || "0.0.0.0";
