@@ -168,19 +168,25 @@ try {
   Bun.spawn([cmd, url], { stdio: "ignore" });
 } catch (e) { /* ignore */ }
 
-// Scheduler: every hour, run pipeline for all active topics
-setInterval(async () => {
-  console.log("[scheduler] hourly tick");
-  // process only ONE blog post per hourly tick
+// Adaptive scheduler: 10 min if 2+ pending, else 1 hour
+async function schedulerTick() {
+  console.log("[scheduler] tick");
   const subs = q<{id:number}>("SELECT id FROM topics WHERE parent_id IS NOT NULL AND selected=1 AND deleted_at IS NULL");
   const pending: number[] = [];
   for (const s of subs) {
     const has = q<{c:number}>("SELECT COUNT(*) as c FROM posts WHERE topic_id=?", [s.id])[0].c;
     if (has === 0) pending.push(s.id);
   }
-  if (pending.length === 0) { console.log("[scheduler] no pending posts"); return; }
-  const next = pending[0];
-  console.log("[scheduler] processing one post: subtopic", next);
-  try { await runPipeline(next); }
-  catch (e:any) { console.error("[scheduler] subtopic", next, "failed:", e?.message); }
-}, 3600000);
+  if (pending.length === 0) {
+    console.log("[scheduler] no pending posts");
+  } else {
+    const next = pending[0];
+    console.log("[scheduler] processing one post: subtopic", next, "(pending:", pending.length, ")");
+    try { await runPipeline(next); }
+    catch (e:any) { console.error("[scheduler] subtopic", next, "failed:", e?.message); }
+  }
+  const interval = pending.length >= 2 ? 10 * 60 * 1000 : 60 * 60 * 1000;
+  console.log(`[scheduler] next tick in ${interval / 60000} min`);
+  setTimeout(schedulerTick, interval);
+}
+setTimeout(schedulerTick, 60 * 60 * 1000);
