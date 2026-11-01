@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="dark" id="root">
+<head><meta charset="utf-8"><title>Kloggy-mini</title>
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen p-2 sm:p-3 font-sans">
+<div class="w-full max-w-none px-1 sm:px-3 lg:px-4">
+  <header class="flex items-center gap-3 mb-2 flex-wrap">
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+      <h1 class="text-lg font-bold">Kloggy</h1>
+    </div>
+    <nav class="flex gap-1 flex-1 justify-center">
+      <button data-tab="topics" onclick="switchTab('topics')" class="tab-btn px-3 py-1.5 rounded-md font-medium text-sm bg-indigo-600 text-white">Topics</button>
+      <button data-tab="posts" onclick="switchTab('posts')" class="tab-btn px-3 py-1.5 rounded-md font-medium text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">Posts</button>
+      <button data-tab="published" onclick="switchTab('published')" class="tab-btn px-3 py-1.5 rounded-md font-medium text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">Published</button>
+      <button data-tab="scheduled" onclick="switchTab('scheduled')" class="tab-btn px-3 py-1.5 rounded-md font-medium text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">Scheduled</button>
+    </nav>
+    <button id="themeToggle" onclick="toggleTheme()" class="px-2 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm" title="Toggle theme"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg></button>
+  </header>
+
+  <main class="w-full">
+    <section id="panel-topics" class="panel bg-white dark:bg-gray-800 rounded-xl shadow p-3">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-semibold text-lg">Topics</h2>
+        <span id="topicCount" class="text-xs text-gray-500"></span>
+      </div>
+      <div id="pendingCount" class="text-xs text-amber-600 dark:text-amber-400 mb-2"></div>
+      <div id="topics" class="space-y-1 max-h-96 overflow-auto"></div>
+      <form id="addTopic" class="mt-2 space-y-1">
+        <input name="title" placeholder="Topic title" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+        <select name="brief" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="Technical">Technical</option>
+          <option value="Casual">Casual</option>
+          <option value="Friendly">Friendly</option>
+        </select>
+        <button class="w-full px-3 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500">+ Add Topic</button>
+        <div id="subProgress" class="hidden h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden"><div class="h-full bg-indigo-600 animate-pulse w-full"></div></div>
+        <p id="subProgressText" class="hidden text-xs text-gray-500">Generating subtopics...</p>
+      </form>
+    </section>
+
+    <section id="panel-posts" class="panel hidden bg-white dark:bg-gray-800 rounded-xl shadow p-3">
+      <div class="flex items-center justify-between mb-1 gap-2">
+        <h2 class="font-semibold text-lg">Posts</h2>
+        <div class="flex items-center gap-2">
+          <div class="flex gap-1">
+            <button data-filter="awaiting_approval" onclick="setStatusFilter('awaiting_approval')" class="status-btn px-2 py-1 rounded-lg text-xs bg-amber-500 text-white">Awaiting</button>
+            <button data-filter="approved" onclick="setStatusFilter('approved')" class="status-btn px-2 py-1 rounded-lg text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">Accepted</button>
+            <button data-filter="rejected" onclick="setStatusFilter('rejected')" class="status-btn px-2 py-1 rounded-lg text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">Rejected</button>
+            <button data-filter="all" onclick="setStatusFilter('all')" class="status-btn px-2 py-1 rounded-lg text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">All</button>
+          </div>
+
+          <span id="postCount" class="text-xs text-gray-500"></span>
+        </div>
+      </div>
+      <div id="posts" class="space-y-1 max-h-96 overflow-auto"></div>
+      <div id="topicsBelow" class="mt-2 pt-3 border-t border-gray-200 dark:border-gray-700"></div>
+    </section>
+
+    <section id="panel-published" class="panel hidden bg-white dark:bg-gray-800 rounded-xl shadow p-3">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-semibold text-lg">Published</h2>
+        <span id="pubCount" class="text-xs text-gray-500"></span>
+      </div>
+      <div id="pubs" class="space-y-1 max-h-96 overflow-auto"></div>
+    </section>
+
+    <section id="panel-scheduled" class="panel hidden bg-white dark:bg-gray-800 rounded-xl shadow p-3">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-semibold text-lg">Scheduled</h2>
+        <span id="schedCount" class="text-xs text-gray-500"></span>
+      </div>
+      <div id="nextRun" class="text-xs text-amber-600 dark:text-amber-400 mb-2"></div>
+      <div id="scheduled" class="space-y-1 max-h-96 overflow-auto"></div>
+    </section>
+  </main>
+
+  <section id="review" class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 mt-3 hidden">
+    <div class="flex items-center justify-between mb-1 gap-2 flex-wrap">
+      <h2 class="font-semibold text-lg" id="rtitle"></h2>
+      <div class="flex items-center gap-2">
+        <select id="viewMode" onchange="applyViewMode()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm">
+          <option value="rendered">Rendered (high fidelity)</option>
+          <option value="plain">Plain text (markdown)</option>
+        </select>
+        <button onclick="closeReview()" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">Close</button>
+      </div>
+    </div>
+    <div id="preview" class="prose dark:prose-invert max-w-none p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-auto max-h-[32rem]"></div>
+    <textarea id="reditor" class="hidden w-full h-64 sm:h-96 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <button onclick="approve()" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-500">Approve and Publish</button>
+      <button onclick="save()" class="px-3 py-1.5 rounded-lg bg-gray-600 text-white font-medium hover:bg-gray-500">Save Edit</button>
+      <button onclick="reject()" class="px-3 py-1.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-500">Reject</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const moonIcon='<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>';
+const sunIcon='<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>';
+function applyTheme(t){
+  const root=document.documentElement;
+  if(t==='light'){root.classList.remove('dark');document.getElementById('themeToggle').innerHTML=sunIcon;}
+  else{root.classList.add('dark');document.getElementById('themeToggle').innerHTML=moonIcon;}
+}
+function toggleTheme(){const isDark=document.documentElement.classList.contains('dark');const next=isDark?'light':'dark';localStorage.setItem('theme',next);applyTheme(next);}
+(function(){applyTheme(localStorage.getItem('theme')||'dark');})();
+
+const pillColor=function(s){return ({researching:'bg-gray-500',outlined:'bg-sky-400',drafted:'bg-blue-500',humanized:'bg-indigo-500',awaiting_approval:'bg-amber-500',approved:'bg-green-500',rejected:'bg-red-500',publishing:'bg-purple-500',published:'bg-emerald-600',failed:'bg-red-700'}[s]||'bg-gray-400');};
+
+let currentPost=null;
+let selectedTopic=null;
+let topicsCache=[];
+let statusFilterValue='awaiting_approval';
+
+function viewTopicPosts(id){
+  const t=topicsCache.find(function(x){return x.id===id;});
+  selectedTopic={id:id,title:t?t.title:'Topic '+id};
+  switchTab('posts');
+  load();
+}
+function clearTopicFilter(){selectedTopic=null;load();}
+function setStatusFilter(v){
+  statusFilterValue=v;
+  var btns=document.querySelectorAll('.status-btn');
+  for(var i=0;i<btns.length;i++){
+    var active=btns[i].dataset.filter===v;
+    btns[i].className='status-btn px-2 py-1 rounded-lg text-xs '+(active?'bg-indigo-600 text-white':'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600');
+  }
+  load();
+}
+function showAllPosts(){selectedTopic=null;statusFilterValue='all';setStatusFilter('all');}
+async function deleteTopic(id){ if(!confirm('Soft-delete this topic?')) return; await fetch('/api/topics/'+id,{method:'DELETE'}); load(); }
+
+function switchTab(name){
+  closeReview();
+  var panels=document.querySelectorAll('.panel');
+  for(var i=0;i<panels.length;i++) panels[i].classList.add('hidden');
+  document.getElementById('panel-'+name).classList.remove('hidden');
+  var btns=document.querySelectorAll('.tab-btn');
+  for(var i=0;i<btns.length;i++){
+    var active=btns[i].dataset.tab===name;
+    btns[i].className='tab-btn px-3 py-1.5 rounded-md font-medium text-sm '+(active?'bg-indigo-600 text-white':'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600');
+  }
+}
+
+async function load(){
+  try {
+    const topicsRaw=await fetch('/api/topics').then(function(r){return r.json();});
+    // unique topics by title, keep latest
+    var topicMap=new Map();
+    topicsRaw.forEach(function(t){var cur=topicMap.get(t.title); if(!cur||t.id>cur.id) topicMap.set(t.title,t);});
+    var topics=[...topicMap.values()];
+    topicsCache=topics;
+    var showTopics=topics;
+    document.getElementById('topicCount').textContent=showTopics.length+' topic'+(showTopics.length!==1?'s':'');
+    fetch('/api/pending').then(function(r){return r.json();}).then(function(j){
+      var el=document.getElementById('pendingCount');
+      if(el) el.textContent = j.pending>0 ? (j.pending+' post'+(j.pending!==1?'s':'')+' pending generation') : '';
+    });
+    document.getElementById('topics').innerHTML=showTopics.length?showTopics.map(function(t){
+      return '<div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition">' +
+        '<div class="min-w-0 cursor-pointer" onclick="viewTopicPosts('+t.id+')"><div class="font-medium truncate">'+t.title+'</div>' +
+        '<div class="text-xs text-gray-500 dark:text-gray-400">'+(t.brief||'—')+'</div></div>' +
+        '<div class="flex gap-1 shrink-0">' +
+        '<button onclick="run('+t.id+',event)" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs hover:bg-indigo-500">Run</button>' +
+        '<button onclick="deleteTopic('+t.id+')" class="px-2 py-1 rounded-lg bg-red-600 text-white text-xs hover:bg-red-500">Del</button></div></div>';
+    }).join(''):'<p class="text-sm text-gray-500 italic">No topics yet. Add one below.</p>';
+
+    const allPostsRaw=await fetch('/api/posts').then(function(r){return r.json();});
+    var postMap=new Map();
+    allPostsRaw.forEach(function(p){var cur=postMap.get(p.title); if(!cur||p.id>cur.id) postMap.set(p.title,p);});
+    var allPosts=[...postMap.values()];
+    var sf=statusFilterValue;
+    var posts=allPosts;
+    if(selectedTopic) posts=posts.filter(function(p){return p.topic_id===selectedTopic.id;});
+    if(sf && sf!=='all') posts=posts.filter(function(p){return p.status===sf;});
+    document.getElementById('postCount').textContent=posts.length+' post'+(posts.length!==1?'s':'');
+    document.getElementById('posts').innerHTML=posts.length?posts.map(function(p){
+      return '<div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer transition" onclick="openPost('+p.id+')">' +
+        '<span class="truncate font-medium">'+p.title+'</span>' +
+        '<span class="text-xs font-semibold text-white px-2.5 py-0.5 rounded-full '+pillColor(p.status)+' ml-2 shrink-0">'+p.status+'</span></div>';
+    }).join(''):'<p class="text-sm text-gray-500 italic">No posts yet. Run a topic.</p>';
+    var tb=document.getElementById('topicsBelow');
+    if(tb) tb.innerHTML='';
+
+    const pubs=await fetch('/api/publications').then(function(r){return r.json();});
+    document.getElementById('pubCount').textContent=pubs.length+' published';
+    document.getElementById('pubs').innerHTML=pubs.length?pubs.map(function(p){
+      return '<div class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition">' +
+        '<a href="'+p.url+'" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm break-all">'+p.url+'</a>' +
+        '<div class="text-xs text-gray-500">'+p.publish_status+' · '+p.published_at+'</div></div>';
+    }).join(''):'<p class="text-sm text-gray-500 italic">Nothing published yet.</p>';
+
+  const sched=await fetch('/api/scheduled').then(function(r){return r.json();});
+  document.getElementById('schedCount').textContent=sched.length+' scheduled';
+  document.getElementById('scheduled').innerHTML=sched.length?sched.map(function(s){
+      return '<div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition">' +
+        '<div class="font-medium truncate">'+s.title+'</div>' +
+        '<div class="text-xs text-gray-500 shrink-0 ml-2">'+s.parent+'</div></div>';
+    }).join(''):'<p class="text-sm text-gray-500 italic">Nothing scheduled.</p>';
+  var nr=new Date(); nr.setMinutes(0,0,0); nr.setHours(nr.getHours()+1);
+  var el=document.getElementById('nextRun');
+  if(el) el.textContent='Next run: '+nr.toLocaleString()+' (hourly)';
+  } catch(e){ console.error('load error', e); alert('Load error: '+e.message); }
+}
+
+function closeReview(){ document.getElementById('review').classList.add('hidden'); currentPost=null; }
+
+async function run(id,ev){
+  const btn=ev.target; btn.disabled=true; const orig=btn.textContent; btn.textContent='...';
+  try {
+    const r=await fetch('/api/run/'+id,{method:'POST'});
+    const j=await r.json();
+    if(j.error) alert('Run failed: '+j.error);
+  } catch(e){ alert('Run failed: '+e.message); }
+  finally { btn.disabled=false; btn.textContent=orig; load(); }
+}
+
+document.getElementById('addTopic').onsubmit=async function(e){
+  e.preventDefault();const f=e.target;
+  document.getElementById('subProgress').classList.remove('hidden');
+  document.getElementById('subProgressText').classList.remove('hidden');
+  const r=await fetch('/api/topics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:f.title.value,brief:f.brief.value})});
+  const j=await r.json();
+  document.getElementById('subProgress').classList.add('hidden');
+  document.getElementById('subProgressText').classList.add('hidden');
+  f.reset();
+  // show subtopic selection
+  const panel=document.createElement('div');
+  panel.className='mt-3 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900';
+  panel.innerHTML='<p class="text-sm font-semibold mb-2">Select subtopics to generate:</p>' +
+    '<div class="flex gap-2 mb-2">' +
+    '<button type="button" class="px-2 py-1 rounded-lg bg-gray-200 dark:bg-gray-700 text-xs hover:bg-gray-300 dark:hover:bg-gray-600" onclick="selectAllSubtopics(this)">Select all</button>' +
+    '<button type="button" class="px-2 py-1 rounded-lg bg-gray-200 dark:bg-gray-700 text-xs hover:bg-gray-300 dark:hover:bg-gray-600" onclick="clearAllSubtopics(this)">Clear all</button>' +
+    '</div>' +
+    (j.subtopics&&j.subtopics.length? j.subtopics.map(function(s){return '<label class="flex items-center gap-2 text-sm py-1"><input type="checkbox" value="'+s.id+'" class="subtopic-cb"> '+s.title+'</label>';}).join('') : '<p class="text-xs text-gray-500">No subtopics generated.</p>') +
+    '<button class="mt-2 px-3 py-1 rounded-lg bg-indigo-600 text-white text-xs" onclick="saveSubtopics('+j.id+',this)">Save selection</button>';
+  f.parentNode.appendChild(panel);
+  load();
+};
+async function saveSubtopics(topicId,btn){
+  const cbs=document.querySelectorAll('.subtopic-cb:checked');
+  const selected=[]; cbs.forEach(function(cb){selected.push(Number(cb.value));});
+  await fetch('/api/topics/'+topicId+'/subtopics',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({selected:selected})});
+  btn.textContent='Saved';
+  setTimeout(function(){btn.parentElement.remove();},800);
+}
+function selectAllSubtopics(btn){ document.querySelectorAll('.subtopic-cb').forEach(function(cb){cb.checked=true;}); }
+function clearAllSubtopics(btn){ document.querySelectorAll('.subtopic-cb').forEach(function(cb){cb.checked=false;}); }
+
+async function openPost(id){
+  currentPost=id;
+  const p=await fetch('/api/posts/'+id).then(function(r){return r.json();});
+  document.getElementById('rtitle').textContent=p.title;
+  document.getElementById('reditor').value=p.final_md||p.humanized_md||p.draft_md||'';
+  applyViewMode();
+  document.getElementById('review').classList.remove('hidden');
+  document.getElementById('review').scrollIntoView({behavior:'smooth'});
+}
+function applyViewMode(){
+  const mode=document.getElementById('viewMode').value;
+  const editor=document.getElementById('reditor');
+  const preview=document.getElementById('preview');
+  if(mode==='rendered'){
+    editor.classList.add('hidden');
+    preview.classList.remove('hidden');
+    preview.innerHTML=marked.parse(editor.value||'');
+  } else {
+    preview.classList.add('hidden');
+    editor.classList.remove('hidden');
+  }
+}
+async function save(){
+  await fetch('/api/posts/'+currentPost,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({final_md:document.getElementById('reditor').value})});
+  const b=document.querySelector('#review button:nth-child(2)'); b.textContent='Saved'; setTimeout(function(){b.textContent='Save Edit';},1200);
+}
+async function approve(){
+  await save();
+  const r=await fetch('/api/posts/'+currentPost+'/approve',{method:'POST'});
+  const j=await r.json();
+  if(j.url) alert('Published: '+j.url);
+  else if(j.message) alert(j.message);
+  else if(j.error) alert('Error: '+j.error);
+  closeReview(); load();
+}
+async function reject(){
+  await fetch('/api/posts/'+currentPost+'/reject',{method:'POST'});
+  closeReview(); load();
+}
+
+load();
+setInterval(load, 15000);
+</script></body></html>

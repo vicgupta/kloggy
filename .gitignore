@@ -1,0 +1,4 @@
+.env
+data/
+kloggy
+node_modules/

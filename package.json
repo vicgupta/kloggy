@@ -1,0 +1,9 @@
+{
+  "name": "kloggy-mini",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun build --compile ./src/index.ts --outfile kloggy"
+  }
+}
