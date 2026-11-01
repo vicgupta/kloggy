@@ -28,8 +28,7 @@
         <span id="topicCount" class="text-xs text-gray-500"></span>
       </div>
       <div id="pendingCount" class="text-xs text-amber-600 dark:text-amber-400 mb-2"></div>
-      <div id="topics" class="space-y-1 max-h-96 overflow-auto"></div>
-      <form id="addTopic" class="mt-2 space-y-1">
+      <form id="addTopic" class="mb-2 space-y-1">
         <input name="title" placeholder="Topic title" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
         <select name="brief" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           <option value="Technical">Technical</option>
@@ -40,6 +39,7 @@
         <div id="subProgress" class="hidden h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden"><div class="h-full bg-indigo-600 animate-pulse w-full"></div></div>
         <p id="subProgressText" class="hidden text-xs text-gray-500">Generating subtopics...</p>
       </form>
+      <div id="topics" class="space-y-1 max-h-96 overflow-auto"></div>
     </section>
 
     <section id="panel-posts" class="panel hidden bg-white dark:bg-gray-800 rounded-xl shadow p-3">
@@ -74,7 +74,7 @@
         <span id="schedCount" class="text-xs text-gray-500"></span>
       </div>
       <div id="nextRun" class="text-xs text-amber-600 dark:text-amber-400 mb-2"></div>
-      <div id="scheduled" class="space-y-1 max-h-96 overflow-auto"></div>
+      <div id="scheduled" class="space-y-1 overflow-auto" style="max-height:calc(100vh - 160px)"></div>
     </section>
   </main>
 
