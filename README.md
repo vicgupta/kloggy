@@ -10,6 +10,8 @@ One-liner (macOS / Linux):
 curl -fsSL https://raw.githubusercontent.com/vicgupta/kloggy/main/install.sh | bash
 ```
 
+The installer places the binary in `$HOME/.local/bin` (or the current directory if that is not writable). It never writes to restricted system directories.
+
 Or run the installer manually:
 
 ```sh
