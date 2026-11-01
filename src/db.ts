@@ -81,11 +81,15 @@ export async function initDb() {
         sdb.close();
         if (cnt > 0) {
           console.log(`Found ${cnt} existing topics in SQLite.`);
-          // ask
-          const readline = await import("node:readline");
-          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-          const answer: string = await new Promise((resolve) => rl.question("Copy existing blogs to PostgreSQL? (y/n) ", resolve));
-          rl.close();
+          let answer = "n";
+          if (process.stdin.isTTY) {
+            const readline = await import("node:readline");
+            const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+            answer = await new Promise((resolve) => rl.question("Copy existing blogs to PostgreSQL? (y/n) ", resolve));
+            rl.close();
+          } else {
+            console.log("Non-interactive: skipping migration (run interactively to migrate).");
+          }
           if (answer.trim().toLowerCase() === "y") {
             // copy
             const sdb2 = new Database(DB_PATH, { readonly: true });
