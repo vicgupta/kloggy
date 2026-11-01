@@ -3,7 +3,7 @@ import { runOpenCode } from "./opencode";
 import { publishToDevto } from "./publish";
 import { initDb, isPostgres, q, run, lastId } from "./db";
 
-const VERSION = "0.1.23";
+const VERSION = "0.1.24";
 // ensure .env exists
 try {
   const fs = await import("node:fs");
@@ -22,6 +22,23 @@ SCHEDULE_IDLE_MINUTES=60
 } catch (e) {}
 
 console.log("Kloggy v" + VERSION);
+if (process.argv.includes("--init")) {
+  const fs = await import("node:fs");
+  const content = `# Kloggy environment configuration
+HOST=0.0.0.0
+PORT=3000
+DEVTO_API_KEY=
+SEARCH_API_KEY=
+OPENCODE_MODEL=opencode-go/beam-free
+OPENCODE_MODEL_FALLBACK=opencode-go/iceman-contributor-free
+POSTGRESQL_URL=
+SCHEDULE_BUSY_MINUTES=5
+SCHEDULE_IDLE_MINUTES=60
+`;
+  fs.writeFileSync(".env.example", content);
+  console.log("Created .env.example with all available options.");
+  process.exit(0);
+}
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(`
 Usage: kloggy [command] [options]
