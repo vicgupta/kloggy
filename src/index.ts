@@ -4,7 +4,23 @@ import { publishToDevto } from "./publish";
 import { db, q, run, lastId } from "./db";
 import html from "../web/index.html" with { type: "text" };
 
-const VERSION = "0.1.10";
+const VERSION = "0.1.11";
+// ensure .env exists
+try {
+  const fs = await import("node:fs");
+  if (!fs.existsSync(".env")) {
+    fs.writeFileSync(".env", `HOST=0.0.0.0
+PORT=3000
+DEVTO_API_KEY=
+SEARCH_API_KEY=
+OPENCODE_MODEL=opencode-go/beam-free
+OPENCODE_MODEL_FALLBACK=opencode-go/iceman-contributor-free
+SCHEDULE_BUSY_MINUTES=5
+SCHEDULE_IDLE_MINUTES=60
+`);
+    console.log("Created default .env");
+  }
+} catch (e) {}
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
   console.log("Kloggy " + VERSION);
   process.exit(0);
