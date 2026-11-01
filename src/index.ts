@@ -3,7 +3,7 @@ import { runOpenCode } from "./opencode";
 import { publishToDevto } from "./publish";
 import { initDb, isPostgres, q, run, lastId } from "./db";
 
-const VERSION = "0.1.13";
+const VERSION = "0.1.14";
 // ensure .env exists
 try {
   const fs = await import("node:fs");
@@ -21,10 +21,28 @@ SCHEDULE_IDLE_MINUTES=60
   }
 } catch (e) {}
 
-await initDb();
+console.log("Kloggy v" + VERSION);
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log(`
+Usage: kloggy [command] [options]
 
+Commands:
+  (default)   Start the server and open the browser
+  update      Self-update to the latest release
+
+Options:
+  --version, -v   Print version and exit
+  --help, -h      Show this help and exit
+
+Environment (.env):
+  HOST, PORT, DEVTO_API_KEY, SEARCH_API_KEY
+  OPENCODE_MODEL, OPENCODE_MODEL_FALLBACK
+  POSTGRESQL_URL (optional, uses Postgres instead of SQLite)
+  SCHEDULE_BUSY_MINUTES (default 5), SCHEDULE_IDLE_MINUTES (default 60)
+`);
+  process.exit(0);
+}
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
-  console.log("Kloggy " + VERSION);
   process.exit(0);
 }
 if (process.argv.includes("update")) {
@@ -52,6 +70,8 @@ if (process.argv.includes("update")) {
   }
   process.exit(0);
 }
+
+await initDb();
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
