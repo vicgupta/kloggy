@@ -24,7 +24,13 @@ if [ -z "$URL" ]; then
   echo "Could not find asset $ASSET"; exit 1
 fi
 
-DEST="${INSTALL_DIR:-/usr/local/bin}/kloggy"
+if [ -n "${INSTALL_DIR:-}" ]; then
+  DEST="$INSTALL_DIR/kloggy"
+elif [ -w "$HOME/.local/bin" ] 2>/dev/null || mkdir -p "$HOME/.local/bin" 2>/dev/null; then
+  DEST="$HOME/.local/bin/kloggy"
+else
+  DEST="./kloggy"
+fi
 echo "Downloading $ASSET -> $DEST"
 mkdir -p "$(dirname "$DEST")"
 curl -L -o "$DEST" "$URL"
