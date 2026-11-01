@@ -4,7 +4,7 @@ import { publishToDevto } from "./publish";
 import { db, q, run, lastId } from "./db";
 import html from "../web/index.html" with { type: "text" };
 
-const VERSION = "0.1.7";
+const VERSION = "0.1.8";
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
   console.log("Kloggy " + VERSION);
   process.exit(0);
@@ -27,12 +27,12 @@ async function runPipeline(topicId: number) {
   run("INSERT OR REPLACE INTO sources(url,title,cleaned_text,content_hash) VALUES(?,?,?,?)", [url, topic.title, research, hash]);
   // 2. Draft
   console.log("[stage 2/3] Draft: calling OpenCode...");
-  const draftPrompt = `Using this research:\n${research}\n\nWrite a blog post titled "${topic.title}" in a direct, plain, first-person tone. 900-1400 words. Markdown. Output only the post.`;
+  const draftPrompt = `Using this research:\n${research}\n\nWrite an SEO-optimized blog post titled "${topic.title}" in a direct, plain, first-person tone. 900-1400 words. Markdown. Requirements: include a compelling H1 title, a meta description (150-160 chars) as the first paragraph, proper H2/H3 heading structure, relevant keywords naturally integrated, a short FAQ section, and 3-4 lowercase tags. Output only the post.`;
   const draft = await runOpenCode(draftPrompt);
   console.log(`[stage 2/3] Draft done: ${draft.length} chars`);
   // 3. Humanize
   console.log("[stage 3/3] Humanize: calling OpenCode...");
-  const humanizePrompt = `Edit this draft for rhythm, varied sentence length, fewer generic phrases, concrete examples, natural transitions. Keep facts. Output only the final markdown.\n\n${draft}`;
+  const humanizePrompt = `Edit this draft for rhythm, varied sentence length, fewer generic phrases, concrete examples, natural transitions. Keep facts and SEO structure (headings, meta description, keywords, FAQ, tags). Output only the final markdown.\n\n${draft}`;
   const humanized = await runOpenCode(humanizePrompt);
   console.log(`[stage 3/3] Humanize done: ${humanized.length} chars`);
   run("INSERT INTO posts(topic_id,title,draft_md,humanized_md,final_md,status) VALUES(?,?,?,?,?,?)",
