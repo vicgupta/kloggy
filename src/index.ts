@@ -188,7 +188,8 @@ async function schedulerTick() {
   const busyMin = Number(process.env.SCHEDULE_BUSY_MINUTES || 30);
   const idleMin = Number(process.env.SCHEDULE_IDLE_MINUTES || 60);
   const interval = (pending.length >= 2 ? busyMin : idleMin) * 60 * 1000;
-  console.log(`[scheduler] next tick in ${interval / 60000} min`);
+  const nextRun = new Date(Date.now() + interval);
+  console.log(`[scheduler] next tick in ${interval / 60000} min (at ${nextRun.toLocaleString()})`);
   setTimeout(schedulerTick, interval);
 }
 setTimeout(schedulerTick, 60 * 60 * 1000);
