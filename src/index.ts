@@ -3,7 +3,7 @@ import { runOpenCode } from "./opencode";
 import { publishToDevto } from "./publish";
 import { initDb, isPostgres, q, run, lastId } from "./db";
 
-const VERSION = "0.1.20";
+const VERSION = "0.1.21";
 // ensure .env exists
 try {
   const fs = await import("node:fs");
@@ -123,7 +123,7 @@ async function schedulerTick() {
   const subs = await q<{id:number}>("SELECT id FROM topics WHERE parent_id IS NOT NULL AND selected=1 AND deleted_at IS NULL");
   const pending: number[] = [];
   for (const s of subs) {
-    const has = (await q<{c:number}>("SELECT COUNT(*) as c FROM posts WHERE topic_id=?", [s.id]))[0].c;
+    const has = Number((await q<{c:any}>("SELECT COUNT(*) as c FROM posts WHERE topic_id=?", [s.id]))[0].c);
     if (has === 0) pending.push(s.id);
   }
   if (pending.length === 0) {
@@ -195,7 +195,7 @@ const server = serve({
       const subs = await q<{id:number}>("SELECT id FROM topics WHERE parent_id IS NOT NULL AND selected=1 AND deleted_at IS NULL");
       let pending = 0;
       for (const s of subs) {
-        const has = (await q<{c:number}>("SELECT COUNT(*) as c FROM posts WHERE topic_id=?", [s.id]))[0].c;
+        const has = Number((await q<{c:any}>("SELECT COUNT(*) as c FROM posts WHERE topic_id=?", [s.id]))[0].c);
         if (has === 0) pending++;
       }
       return Response.json({ pending });
@@ -204,7 +204,7 @@ const server = serve({
       const subs = await q<{id:number;title:string;parent_id:number}>("SELECT id,title,parent_id FROM topics WHERE parent_id IS NOT NULL AND selected=1 AND deleted_at IS NULL");
       const out: any[] = [];
       for (const s of subs) {
-        const has = (await q<{c:number}>("SELECT COUNT(*) as c FROM posts WHERE topic_id=?", [s.id]))[0].c;
+        const has = Number((await q<{c:any}>("SELECT COUNT(*) as c FROM posts WHERE topic_id=?", [s.id]))[0].c);
         if (has === 0) {
           const parent = (await q<{title:string}>("SELECT title FROM topics WHERE id=?", [s.parent_id]))[0];
           out.push({ id: s.id, title: s.title, parent: parent ? parent.title : "" });
