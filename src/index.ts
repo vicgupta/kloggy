@@ -185,7 +185,9 @@ async function schedulerTick() {
     try { await runPipeline(next); }
     catch (e:any) { console.error("[scheduler] subtopic", next, "failed:", e?.message); }
   }
-  const interval = pending.length >= 2 ? 10 * 60 * 1000 : 60 * 60 * 1000;
+  const busyMin = Number(process.env.SCHEDULE_BUSY_MINUTES || 30);
+  const idleMin = Number(process.env.SCHEDULE_IDLE_MINUTES || 60);
+  const interval = (pending.length >= 2 ? busyMin : idleMin) * 60 * 1000;
   console.log(`[scheduler] next tick in ${interval / 60000} min`);
   setTimeout(schedulerTick, interval);
 }
