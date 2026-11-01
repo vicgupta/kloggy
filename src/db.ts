@@ -29,6 +29,46 @@ export async function initDb() {
     const { Client } = await import("pg");
     pgClient = new Client({ connectionString: PG_URL });
     await pgClient.connect();
+    // create schema first
+    await pgClient.query(`CREATE TABLE IF NOT EXISTS topics (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      brief TEXT,
+      cadence_cron TEXT NOT NULL DEFAULT '0 9 * * 2,5',
+      status TEXT NOT NULL DEFAULT 'active',
+      next_run_at TEXT,
+      deleted_at TIMESTAMP,
+      parent_id INTEGER REFERENCES topics(id),
+      selected INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );`);
+    await pgClient.query(`CREATE TABLE IF NOT EXISTS sources (
+      id SERIAL PRIMARY KEY,
+      url TEXT NOT NULL UNIQUE,
+      title TEXT,
+      fetched_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      cleaned_text TEXT NOT NULL,
+      summary TEXT,
+      content_hash TEXT NOT NULL
+    );`);
+    await pgClient.query(`CREATE TABLE IF NOT EXISTS posts (
+      id SERIAL PRIMARY KEY,
+      topic_id INTEGER NOT NULL REFERENCES topics(id),
+      title TEXT, draft_md TEXT, humanized_md TEXT, final_md TEXT,
+      status TEXT NOT NULL DEFAULT 'researching',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );`);
+    await pgClient.query(`CREATE TABLE IF NOT EXISTS publications (
+      id SERIAL PRIMARY KEY,
+      post_id INTEGER NOT NULL REFERENCES posts(id),
+      platform TEXT NOT NULL DEFAULT 'devto',
+      external_id TEXT, url TEXT, publish_status TEXT, published_at TIMESTAMP
+    );`);
+    // verify schema
+    const tCheck = await pgClient.query("SELECT to_regclass('public.topics') as t");
+    if (!tCheck.rows[0].t) throw new Error("topics table not created");
+    console.log("[db] PostgreSQL schema ready");
     // migration prompt
     try {
       const fs = await import("node:fs");
@@ -80,41 +120,6 @@ export async function initDb() {
         }
       }
     } catch (e) { console.error("migration check failed:", e); }
-    await pgClient.query(`CREATE TABLE IF NOT EXISTS topics (
-      id SERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      brief TEXT,
-      cadence_cron TEXT NOT NULL DEFAULT '0 9 * * 2,5',
-      status TEXT NOT NULL DEFAULT 'active',
-      next_run_at TEXT,
-      deleted_at TIMESTAMP,
-      parent_id INTEGER REFERENCES topics(id),
-      selected INTEGER NOT NULL DEFAULT 0,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );`);
-    await pgClient.query(`CREATE TABLE IF NOT EXISTS sources (
-      id SERIAL PRIMARY KEY,
-      url TEXT NOT NULL UNIQUE,
-      title TEXT,
-      fetched_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      cleaned_text TEXT NOT NULL,
-      summary TEXT,
-      content_hash TEXT NOT NULL
-    );`);
-    await pgClient.query(`CREATE TABLE IF NOT EXISTS posts (
-      id SERIAL PRIMARY KEY,
-      topic_id INTEGER NOT NULL REFERENCES topics(id),
-      title TEXT, draft_md TEXT, humanized_md TEXT, final_md TEXT,
-      status TEXT NOT NULL DEFAULT 'researching',
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );`);
-    await pgClient.query(`CREATE TABLE IF NOT EXISTS publications (
-      id SERIAL PRIMARY KEY,
-      post_id INTEGER NOT NULL REFERENCES posts(id),
-      platform TEXT NOT NULL DEFAULT 'devto',
-      external_id TEXT, url TEXT, publish_status TEXT, published_at TIMESTAMP
-    );`);
     console.log("[db] PostgreSQL connected");
   } else {
     const { Database } = await import("bun:sqlite");
