@@ -31,7 +31,7 @@ INSTALL_DIR="$HOME/.local/bin" ./install.sh
 ```sh
 kloggy            # start server + open browser (default port 3000)
 kloggy --version  # print version
-kloggy update     # self-update to latest release
+kloggy --update   # self-update to latest release (also: -u, update)
 ```
 
 Configure via `.env` beside the binary (`HOST`, `PORT`, `DEVTO_API_KEY`, `OPENCODE_MODEL`, ...).
