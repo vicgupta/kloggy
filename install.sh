@@ -19,7 +19,7 @@ case "$OS" in
 esac
 
 echo "Fetching latest release info..."
-URL=$(curl -s "$API" | grep -o "https://github.com/${REPO}/releases/download/[^\"]*/${ASSET}" | head -1)
+URL=$(curl -s -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "$API" | grep -o "https://github.com/${REPO}/releases/download/[^\"]*/${ASSET}" | head -1)
 if [ -z "$URL" ]; then
   echo "Could not find asset $ASSET"; exit 1
 fi
@@ -33,7 +33,7 @@ else
 fi
 echo "Downloading $ASSET -> $DEST"
 mkdir -p "$(dirname "$DEST")"
-curl -L -o "$DEST" "$URL"
+curl -L -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' -o "$DEST" "$URL"
 chmod +x "$DEST"
 echo "Installed Kloggy to $DEST"
 echo "Run: kloggy --version"
