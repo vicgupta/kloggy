@@ -2,3 +2,4 @@
 data/
 kloggy
 node_modules/
+.env.swp
