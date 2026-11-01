@@ -3,7 +3,7 @@ import { runOpenCode } from "./opencode";
 import { publishToDevto } from "./publish";
 import { initDb, isPostgres, q, run, lastId } from "./db";
 
-const VERSION = "0.1.14";
+const VERSION = "0.1.16";
 // ensure .env exists
 try {
   const fs = await import("node:fs");
@@ -45,8 +45,21 @@ Environment (.env):
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
   process.exit(0);
 }
-if (process.argv.includes("update")) {
+if (process.argv.includes("update") || process.argv.includes("--update") || process.argv.includes("-u")) {
   try {
+    // kill existing running instance on the port
+    try {
+      const { execSync } = await import("node:child_process");
+      const out = execSync(`lsof -t -i:${PORT}`, { encoding: "utf8" }).trim();
+      if (out) {
+        for (const pid of out.split(/\s+/)) {
+          if (pid && Number(pid) !== process.pid) {
+            try { process.kill(Number(pid), "SIGTERM"); console.log("Killed existing process", pid); } catch (e) {}
+          }
+        }
+      }
+    } catch (e) { /* no process or lsof unavailable */ }
+    await new Promise((r) => setTimeout(r, 1000));
     console.log("Checking for updates...");
     const res = await fetch("https://api.github.com/repos/vicgupta/kloggy/releases/latest");
     if (!res.ok) { console.error("Failed to fetch release:", res.status); process.exit(1); }
