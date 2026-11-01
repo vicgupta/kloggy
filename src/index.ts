@@ -4,6 +4,11 @@ import { publishToDevto } from "./publish";
 import { db, q, run, lastId } from "./db";
 import html from "../web/index.html" with { type: "text" };
 
+const VERSION = "0.1.6";
+if (process.argv.includes("--version") || process.argv.includes("-v")) {
+  console.log("Kloggy " + VERSION);
+  process.exit(0);
+}
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
 
@@ -160,7 +165,7 @@ const server = serve({
     return new Response("not found", { status: 404 });
   },
 });
-console.log(`Kloggy running on http://${HOST}:${PORT}`);
+console.log(`Kloggy v${VERSION} running on http://${HOST}:${PORT}`);
 // open browser
 const url = `http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`;
 try {
