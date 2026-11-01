@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run src/index.ts",
+    "dev:watch": "bun --watch run src/index.ts",
     "build": "bun build --compile ./src/index.ts --outfile kloggy"
   }
 }
