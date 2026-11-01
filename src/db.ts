@@ -29,6 +29,57 @@ export async function initDb() {
     const { Client } = await import("pg");
     pgClient = new Client({ connectionString: PG_URL });
     await pgClient.connect();
+    // migration prompt
+    try {
+      const fs = await import("node:fs");
+      if (fs.existsSync(DB_PATH)) {
+        const { Database } = await import("bun:sqlite");
+        const sdb = new Database(DB_PATH, { readonly: true });
+        const cnt = (sdb.query("SELECT COUNT(*) as c FROM topics").get() as any)?.c ?? 0;
+        sdb.close();
+        if (cnt > 0) {
+          console.log(`Found ${cnt} existing topics in SQLite.`);
+          // ask
+          const readline = await import("node:readline");
+          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+          const answer: string = await new Promise((resolve) => rl.question("Copy existing blogs to PostgreSQL? (y/n) ", resolve));
+          rl.close();
+          if (answer.trim().toLowerCase() === "y") {
+            // copy
+            const sdb2 = new Database(DB_PATH, { readonly: true });
+            const topics = sdb2.query("SELECT * FROM topics").all() as any[];
+            const sources = sdb2.query("SELECT * FROM sources").all() as any[];
+            const posts = sdb2.query("SELECT * FROM posts").all() as any[];
+            const pubs = sdb2.query("SELECT * FROM publications").all() as any[];
+            for (const t of topics) {
+              await pgClient.query("INSERT INTO topics (id,title,brief,cadence_cron,status,next_run_at,deleted_at,parent_id,selected,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING",
+                [t.id,t.title,t.brief,t.cadence_cron,t.status,t.next_run_at,t.deleted_at,t.parent_id,t.selected,t.created_at]);
+            }
+            for (const s of sources) {
+              await pgClient.query("INSERT INTO sources (id,url,title,fetched_at,cleaned_text,summary,content_hash) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING",
+                [s.id,s.url,s.title,s.fetched_at,s.cleaned_text,s.summary,s.content_hash]);
+            }
+            for (const p of posts) {
+              await pgClient.query("INSERT INTO posts (id,topic_id,title,draft_md,humanized_md,final_md,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING",
+                [p.id,p.topic_id,p.title,p.draft_md,p.humanized_md,p.final_md,p.status,p.created_at,p.updated_at]);
+            }
+            for (const pu of pubs) {
+              await pgClient.query("INSERT INTO publications (id,post_id,platform,external_id,url,publish_status,published_at) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING",
+                [pu.id,pu.post_id,pu.platform,pu.external_id,pu.url,pu.publish_status,pu.published_at]);
+            }
+            // reset sequences
+            await pgClient.query("SELECT setval('topics_id_seq', (SELECT MAX(id) FROM topics))");
+            await pgClient.query("SELECT setval('sources_id_seq', (SELECT MAX(id) FROM sources))");
+            await pgClient.query("SELECT setval('posts_id_seq', (SELECT MAX(id) FROM posts))");
+            await pgClient.query("SELECT setval('publications_id_seq', (SELECT MAX(id) FROM publications))");
+            sdb2.close();
+            console.log("Migration complete.");
+          } else {
+            console.log("Skipping migration.");
+          }
+        }
+      }
+    } catch (e) { console.error("migration check failed:", e); }
     await pgClient.query(`CREATE TABLE IF NOT EXISTS topics (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
