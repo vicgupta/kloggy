@@ -4,7 +4,7 @@ import { publishToDevto } from "./publish";
 import { db, q, run, lastId } from "./db";
 import html from "../web/index.html" with { type: "text" };
 
-const VERSION = "0.1.6";
+const VERSION = "0.1.7";
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
   console.log("Kloggy " + VERSION);
   process.exit(0);
@@ -197,7 +197,9 @@ async function schedulerTick() {
   console.log(`[scheduler] next tick in ${interval / 60000} min (at ${nextRun.toLocaleString()})`);
   setTimeout(schedulerTick, interval);
 }
-setTimeout(schedulerTick, 60 * 60 * 1000);
+const firstDelay = 60 * 1000;
+console.log(`[scheduler] first run in ${firstDelay / 60000} min (at ${new Date(Date.now() + firstDelay).toLocaleString()})`);
+setTimeout(schedulerTick, firstDelay);
 
 function shutdown() {
   console.log("\nShutting down...");
