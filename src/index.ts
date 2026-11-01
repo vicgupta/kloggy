@@ -160,7 +160,13 @@ serve({
     return new Response("not found", { status: 404 });
   },
 });
-console.log(`Kloggy-mini running on http://${HOST}:${PORT}`);
+console.log(`Kloggy running on http://${HOST}:${PORT}`);
+// open browser
+const url = `http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`;
+try {
+  const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+  Bun.spawn([cmd, url], { stdio: "ignore" });
+} catch (e) { /* ignore */ }
 
 // Scheduler: every hour, run pipeline for all active topics
 setInterval(async () => {
