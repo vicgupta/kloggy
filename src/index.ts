@@ -37,7 +37,7 @@ async function runPipeline(topicId: number) {
   return id;
 }
 
-serve({
+const server = serve({
   hostname: HOST, port: PORT, idleTimeout: 255,
   async fetch(req) {
     const u = new URL(req.url);
@@ -190,3 +190,11 @@ async function schedulerTick() {
   setTimeout(schedulerTick, interval);
 }
 setTimeout(schedulerTick, 60 * 60 * 1000);
+
+function shutdown() {
+  console.log("\nShutting down...");
+  try { server.stop(true); } catch (e) {}
+  process.exit(0);
+}
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
