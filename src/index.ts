@@ -3,7 +3,7 @@ import { runOpenCode } from "./opencode";
 import { publishToDevto } from "./publish";
 import { initDb, isPostgres, q, run, lastId } from "./db";
 
-const VERSION = "0.1.17";
+const VERSION = "0.1.18";
 // ensure .env exists
 try {
   const fs = await import("node:fs");

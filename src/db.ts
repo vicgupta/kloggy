@@ -27,7 +27,9 @@ function toPgParams(sql: string): { sql: string; } {
 export async function initDb() {
   if (backend === "postgres") {
     const { Client } = await import("pg");
-    pgClient = new Client({ connectionString: PG_URL });
+    // strip sslmode to avoid libpq warning; use rejectUnauthorized:false for self-signed certs
+    const connStr = (PG_URL || "").replace(/[?&]sslmode=[^&]*/g, "");
+    pgClient = new Client({ connectionString: connStr, ssl: { rejectUnauthorized: false } });
     await pgClient.connect();
     // create schema first
     await pgClient.query(`CREATE TABLE IF NOT EXISTS topics (
