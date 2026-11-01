@@ -3,7 +3,7 @@ import { runOpenCode } from "./opencode";
 import { publishToDevto } from "./publish";
 import { initDb, isPostgres, q, run, lastId } from "./db";
 
-const VERSION = "0.1.22";
+const VERSION = "0.1.23";
 // ensure .env exists
 try {
   const fs = await import("node:fs");
@@ -50,7 +50,8 @@ if (process.argv.includes("update") || process.argv.includes("--update") || proc
     // kill existing running instance on the port
     try {
       const { execSync } = await import("node:child_process");
-      const out = execSync(`lsof -t -i:${PORT}`, { encoding: "utf8" }).trim();
+      const port = process.env.PORT || 3000;
+      const out = execSync(`lsof -t -i:${port}`, { encoding: "utf8" }).trim();
       if (out) {
         for (const pid of out.split(/\s+/)) {
           if (pid && Number(pid) !== process.pid) {
